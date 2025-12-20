@@ -26,7 +26,7 @@ app.use(async (req, res, next) => {
 // Middleware - these run on every request before it reaches our routes
 app.use(cors()); // Enable CORS so frontend can talk to backend
 app.use(express.json()); // Parse JSON data from requests (like form data)
-app.use('/uploads', express.static('uploads')); // Serve uploaded files (like payment proofs)
+// Note: File serving disabled in serverless - use cloud storage for production
 
 // Import route handlers - these contain the actual API logic
 const authRoutes = require('./routes/auth'); // Handles login, register, user management

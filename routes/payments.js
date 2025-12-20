@@ -6,13 +6,16 @@ const Tenant = require('../models/Tenant');
 
 const router = express.Router();
 
-const upload = multer({ dest: 'uploads/' });
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 // Upload payment (POP)
 router.post('/upload', auth, upload.single('proofOfPayment'), async (req, res) => {
   const { type } = req.body;
   const tenantId = req.user.id;
-  const fileUrl = req.file ? req.file.path : null;
+  const fileUrl = req.file ? `uploaded_${Date.now()}_${req.file.originalname}` : null;
+  // In production, upload to cloud storage like S3 here
+  // For now, just store the filename
   try {
     const payment = new Payment({ tenantId, type: 'POP', fileUrl });
     await payment.save();
