@@ -8,12 +8,20 @@ const cors = require('cors'); // Allows requests from different domains (like ou
 require('dotenv').config(); // Loads environment variables from .env file (like database passwords)
 const connectDB = require('./config/db'); // Our database connection function
 
-// Connect to MongoDB database
-connectDB();
-
 // Create Express application - this is our web server
 const app = express();
 const PORT = process.env.PORT || 3000; // Use port from environment or default to 3000
+
+// Middleware to connect to database
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 
 // Middleware - these run on every request before it reaches our routes
 app.use(cors()); // Enable CORS so frontend can talk to backend
