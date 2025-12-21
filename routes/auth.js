@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken'); // For creating authentication tokens
 const Tenant = require('../models/Tenant'); // User data model
 const Admin = require('../models/Admin'); // Admin data model
 const { auth } = require('../middleware/auth'); // Authentication middleware
+const { sendWelcomeEmail, sendWelcomeSMS } = require('../utils/notifications'); // Notification utilities
 
 const router = express.Router(); // Create a router for these routes
 
@@ -53,6 +54,17 @@ router.post('/register', async (req, res) => {
 
     // Save to database
     await tenant.save();
+
+    // Send welcome notifications (don't block registration if notifications fail)
+    try {
+      if (tenant.email) {
+        await sendWelcomeEmail(tenant);
+      }
+      await sendWelcomeSMS(tenant);
+    } catch (notificationError) {
+      console.error('Notification sending failed:', notificationError);
+      // Don't fail registration if notifications fail
+    }
 
     // Send success response
     res.status(201).json({ message: 'Tenant registered successfully!' });
