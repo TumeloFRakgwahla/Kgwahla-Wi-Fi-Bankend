@@ -1,6 +1,7 @@
 const express = require('express');
 const { auth, adminAuth } = require('../middleware/auth');
 const Tenant = require('../models/Tenant');
+const { sendWiFiActivationEmail } = require('../utils/notifications');
 
 const router = express.Router();
 
@@ -59,6 +60,61 @@ router.post('/approve/:id', auth, adminAuth, async (req, res) => {
     await tenant.save();
 
     res.json({ message: 'Tenant approved and WiFi access enabled' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Activate WiFi access
+router.post('/activate/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.params.id);
+    if (!tenant) return res.status(404).json({ message: 'Tenant not found' });
+
+    tenant.wifiAccess = true;
+    tenant.status = 'active';
+    await tenant.save();
+
+    // Send activation notification
+    try {
+      if (tenant.email) {
+        await sendWiFiActivationEmail(tenant);
+      }
+    } catch (notificationError) {
+      console.error('WiFi activation notification failed:', notificationError);
+    }
+
+    res.json({ message: 'WiFi access activated' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Deactivate WiFi access
+router.post('/deactivate/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.params.id);
+    if (!tenant) return res.status(404).json({ message: 'Tenant not found' });
+
+    tenant.wifiAccess = false;
+    await tenant.save();
+
+    res.json({ message: 'WiFi access deactivated' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Unblock tenant
+router.post('/unblock', auth, adminAuth, async (req, res) => {
+  const { tenantId } = req.body;
+  try {
+    const tenant = await Tenant.findById(tenantId);
+    if (!tenant) return res.status(404).json({ message: 'Tenant not found' });
+    tenant.status = 'active';
+    // WiFi access remains false until explicitly activated
+    await tenant.save();
+    res.json({ message: 'Tenant unblocked' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
