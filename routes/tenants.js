@@ -65,7 +65,7 @@ router.post('/approve/:id', auth, adminAuth, async (req, res) => {
   }
 });
 
-// Activate WiFi access
+// Activate account
 router.post('/activate/:id', auth, adminAuth, async (req, res) => {
   try {
     const tenant = await Tenant.findById(req.params.id);
@@ -81,25 +81,26 @@ router.post('/activate/:id', auth, adminAuth, async (req, res) => {
         await sendWiFiActivationEmail(tenant);
       }
     } catch (notificationError) {
-      console.error('WiFi activation notification failed:', notificationError);
+      console.error('Account activation notification failed:', notificationError);
     }
 
-    res.json({ message: 'WiFi access activated' });
+    res.json({ message: 'Account activated' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// Deactivate WiFi access
+// Deactivate account
 router.post('/deactivate/:id', auth, adminAuth, async (req, res) => {
   try {
     const tenant = await Tenant.findById(req.params.id);
     if (!tenant) return res.status(404).json({ message: 'Tenant not found' });
 
     tenant.wifiAccess = false;
+    tenant.status = 'inactive';
     await tenant.save();
 
-    res.json({ message: 'WiFi access deactivated' });
+    res.json({ message: 'Account deactivated' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
