@@ -8,7 +8,7 @@ const tenantSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   macAddress: { type: String, required: true },
   passwordHash: { type: String, required: true },
-  status: { type: String, enum: ['active', 'blocked'], default: 'active' },
+  status: { type: String, enum: ['active', 'inactive', 'blocked'], default: 'active' },
   wifiAccess: { type: Boolean, default: false },
   expiryDate: { type: Date, required: true }
 }, { timestamps: true });
