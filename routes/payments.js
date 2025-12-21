@@ -3,7 +3,7 @@ const multer = require('multer');
 const { auth, adminAuth } = require('../middleware/auth');
 const Payment = require('../models/Payment');
 const Tenant = require('../models/Tenant');
-const { sendWiFiActivationEmail, sendWiFiActivationSMS } = require('../utils/notifications');
+const { sendWiFiActivationEmail } = require('../utils/notifications');
 
 const router = express.Router();
 
@@ -71,15 +71,14 @@ router.post('/approve/:id', auth, adminAuth, async (req, res) => {
     tenant.wifiAccess = true;
     await tenant.save();
 
-    // Send WiFi activation notifications
+    // Send WiFi activation email notification
     try {
       if (tenant.email) {
         await sendWiFiActivationEmail(tenant);
       }
-      await sendWiFiActivationSMS(tenant);
     } catch (notificationError) {
-      console.error('WiFi activation notification failed:', notificationError);
-      // Don't fail the approval if notifications fail
+      console.error('WiFi activation email failed:', notificationError);
+      // Don't fail the approval if email fails
     }
 
     res.json({ message: 'Payment approved' });
