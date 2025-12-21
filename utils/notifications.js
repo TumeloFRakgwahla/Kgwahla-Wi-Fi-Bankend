@@ -11,43 +11,7 @@ const emailTransporter = nodemailer.createTransport({
   }
 });
 
-// SMS configuration (using Africa's Talking for South African SMS)
-const sendSMS = async (phoneNumber, message) => {
-  try {
-    // Remove any spaces, dashes, or + from phone number
-    const cleanNumber = phoneNumber.replace(/[\s\-+]/g, '');
-
-    // Ensure it starts with country code
-    const formattedNumber = cleanNumber.startsWith('27') ? cleanNumber : `27${cleanNumber.substring(1)}`;
-
-    // Africa's Talking API call (you'll need to sign up and get API key)
-    const response = await fetch('https://api.africastalking.com/version1/messaging', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'apiKey': process.env.AFRICAS_TALKING_API_KEY,
-        'username': process.env.AFRICAS_TALKING_USERNAME
-      },
-      body: new URLSearchParams({
-        to: `+${formattedNumber}`,
-        message: message,
-        from: process.env.SMS_SENDER_ID || 'KgwahlaWiFi'
-      })
-    });
-
-    if (!response.ok) {
-      console.error('SMS sending failed:', await response.text());
-      return false;
-    }
-
-    console.log('SMS sent successfully to', formattedNumber);
-    return true;
-  } catch (error) {
-    console.error('SMS sending error:', error);
-    return false;
-  }
-};
+// SMS functionality removed - keeping only email notifications
 
 // Send welcome email after registration
 const sendWelcomeEmail = async (tenant) => {
@@ -89,11 +53,7 @@ const sendWelcomeEmail = async (tenant) => {
   }
 };
 
-// Send welcome SMS after registration
-const sendWelcomeSMS = async (tenant) => {
-  const message = `Welcome ${tenant.name}! Your Kgwahla Wi-Fi registration is complete. Room: ${tenant.roomNumber}. Please submit payment to activate WiFi.`;
-  return await sendSMS(tenant.phone, message);
-};
+// SMS functionality removed
 
 // Send WiFi activation notification
 const sendWiFiActivationEmail = async (tenant) => {
@@ -129,16 +89,9 @@ const sendWiFiActivationEmail = async (tenant) => {
   }
 };
 
-// Send WiFi activation SMS
-const sendWiFiActivationSMS = async (tenant) => {
-  const expiryDate = new Date(tenant.expiryDate).toLocaleDateString();
-  const message = `WiFi Activated! ${tenant.name}, your payment is approved. Network: Skyline_Residences_5G. Expires: ${expiryDate}. Enjoy your connection!`;
-  return await sendSMS(tenant.phone, message);
-};
+// SMS functionality removed
 
 module.exports = {
   sendWelcomeEmail,
-  sendWelcomeSMS,
-  sendWiFiActivationEmail,
-  sendWiFiActivationSMS
+  sendWiFiActivationEmail
 };
