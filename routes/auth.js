@@ -16,9 +16,20 @@ const router = express.Router(); // Create a router for these routes
 // Creates a new user account
 router.post('/register', async (req, res) => {
   // Get user data from the request body (what user typed in the form)
-  const { name, roomNumber, idNumber, phone, email, password, expiryDate } = req.body;
+  const { name, roomNumber, idNumber, phone, email, macAddress, password, expiryDate } = req.body;
 
   try {
+    // Validate South African ID number (13 digits)
+    if (!/^\d{13}$/.test(idNumber)) {
+      return res.status(400).json({ message: 'Please provide a valid 13-digit South African ID number' });
+    }
+
+    // Validate South African cell phone number
+    const cleanPhone = phone.replace(/\s|-/g, '');
+    if (!/^(\+27|0)[6-8][0-9]{8}$/.test(cleanPhone)) {
+      return res.status(400).json({ message: 'Please provide a valid South African cell phone number' });
+    }
+
     // Check if user already exists (by email or ID number)
     const existing = await Tenant.findOne({ $or: [{ email }, { idNumber }] });
     if (existing) {
@@ -35,6 +46,7 @@ router.post('/register', async (req, res) => {
       idNumber,
       phone,
       email,
+      macAddress,
       passwordHash, // Store hashed password
       expiryDate
     });

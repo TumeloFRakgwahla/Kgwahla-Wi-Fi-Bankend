@@ -5,7 +5,7 @@ const Admin = require('./models/Admin');
 async function createAdmin() {
   try {
     // Connect to MongoDB
-    await mongoose.connect('mongodb://localhost:27017/kgwahla-wifi');
+    await mongoose.connect('mongodb+srv://tumelorakgwahla_db_user:fSNiBPn2c7v6xKR2@kgwahla-wi-fi.k2a295v.mongodb.net/kgwahla-wifi');
 
     // Check if admin already exists
     const existingAdmin = await Admin.findOne({ email: 'admin@skyline.com' });
