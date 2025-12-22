@@ -14,11 +14,22 @@ const upload = multer({ storage: storage });
 router.post('/upload', auth, upload.single('proofOfPayment'), async (req, res) => {
   const { type } = req.body;
   const tenantId = req.user.id;
-  const fileUrl = req.file ? `uploaded_${Date.now()}_${req.file.originalname}` : null;
-  // In production, upload to cloud storage like S3 here
-  // For now, just store the filename
+
   try {
-    const payment = new Payment({ tenantId, type: 'POP', fileUrl });
+    const paymentData = {
+      tenantId,
+      type: 'POP',
+      fileUrl: req.file ? `uploaded_${Date.now()}_${req.file.originalname}` : null,
+    };
+
+    // Store file data if present
+    if (req.file) {
+      paymentData.fileData = req.file.buffer;
+      paymentData.fileMimeType = req.file.mimetype;
+      paymentData.fileName = req.file.originalname;
+    }
+
+    const payment = new Payment(paymentData);
     await payment.save();
     res.json({ message: 'Payment uploaded', payment });
   } catch (error) {
@@ -95,6 +106,42 @@ router.post('/reject/:id', auth, adminAuth, async (req, res) => {
     payment.status = 'rejected';
     await payment.save();
     res.json({ message: 'Payment rejected' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// View payment proof
+router.get('/proof/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.id);
+    if (!payment) return res.status(404).json({ message: 'Payment not found' });
+
+    // Check for fileData first, then fall back to fileUrl (for older payments)
+    if (payment.fileData) {
+      // Set appropriate headers
+      res.set({
+        'Content-Type': payment.fileMimeType || 'application/octet-stream',
+        'Content-Disposition': `inline; filename="${payment.fileName || 'payment-proof'}"`,
+      });
+      // Send the file data
+      res.send(payment.fileData);
+    } else if (payment.fileUrl) {
+      // For older payments, return a message since file is not stored
+      res.set('Content-Type', 'text/html');
+      res.send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+            <h2>Payment Proof</h2>
+            <p>File: ${payment.fileUrl}</p>
+            <p><em>Note: This is an older payment. File data is not stored in the database.</em></p>
+            <p><em>Please check the original uploaded file if available.</em></p>
+          </body>
+        </html>
+      `);
+    } else {
+      return res.status(404).json({ message: 'No proof file found' });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

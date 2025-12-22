@@ -4,6 +4,9 @@ const paymentSchema = new mongoose.Schema({
   tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
   type: { type: String, enum: ['POP', 'cash'], required: true },
   fileUrl: { type: String },
+  fileData: { type: Buffer }, // Store file buffer
+  fileMimeType: { type: String }, // Store MIME type
+  fileName: { type: String }, // Store original filename
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   uploadedAt: { type: Date, default: Date.now },
   approvedAt: { type: Date }

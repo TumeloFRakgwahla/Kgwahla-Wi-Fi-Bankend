@@ -121,4 +121,23 @@ router.post('/unblock', auth, adminAuth, async (req, res) => {
   }
 });
 
+// Delete tenant (permanent removal)
+router.delete('/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.params.id);
+    if (!tenant) return res.status(404).json({ message: 'Tenant not found' });
+
+    // Delete associated payments
+    const Payment = require('../models/Payment');
+    await Payment.deleteMany({ tenantId: req.params.id });
+
+    // Delete the tenant
+    await Tenant.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Tenant and associated data deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
