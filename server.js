@@ -33,12 +33,14 @@ const authRoutes = require('./routes/auth'); // Handles login, register, user ma
 const paymentRoutes = require('./routes/payments'); // Handles payment uploads and verification
 const tenantRoutes = require('./routes/tenants'); // Handles tenant management for admins
 const accessRoutes = require('./routes/access'); // Handles WiFi access control
+const contactRoutes = require('./routes/contact'); // Handles contact form submissions
 
 // Set up API routes - all our API endpoints start with /api
 app.use('/api/auth', authRoutes); // Authentication routes: /api/auth/login, /api/auth/register
 app.use('/api/payments', paymentRoutes); // Payment routes: /api/payments/upload, /api/payments/status
 app.use('/api/tenants', tenantRoutes); // Tenant routes: /api/tenants (admin only)
 app.use('/api/access', accessRoutes); // Access routes: /api/access/enable, /api/access/disable
+app.use('/api/contact', contactRoutes); // Contact routes: /api/contact/submit
 
 // Basic route to check if server is running - like a "hello world" for our API
 app.get('/', (req, res) => {
