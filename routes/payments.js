@@ -112,8 +112,23 @@ router.post('/reject/:id', auth, adminAuth, async (req, res) => {
 });
 
 // View payment proof
-router.get('/proof/:id', auth, adminAuth, async (req, res) => {
+router.get('/proof/:id', async (req, res) => {
+  // Check for token in query parameter (for direct URL access)
+  const token = req.query.token || req.headers.authorization?.replace('Bearer ', '');
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
   try {
+    // Verify token
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
     const payment = await Payment.findById(req.params.id);
     if (!payment) return res.status(404).json({ message: 'Payment not found' });
 
