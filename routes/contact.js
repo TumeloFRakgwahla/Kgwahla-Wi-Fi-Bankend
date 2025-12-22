@@ -7,11 +7,23 @@ const router = express.Router();
 router.post('/submit', async (req, res) => {
   const { name, email, subject, message } = req.body;
 
+  console.log('Contact form submission:', { name, email, subject, message: message?.substring(0, 50) + '...' });
+
   if (!name || !email || !message) {
     return res.status(400).json({ message: 'Name, email, and message are required' });
   }
 
+  // Check if email credentials are available
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error('Email credentials not found:', {
+      EMAIL_USER: process.env.EMAIL_USER ? 'SET' : 'NOT SET',
+      EMAIL_PASS: process.env.EMAIL_PASS ? 'SET' : 'NOT SET'
+    });
+    return res.status(500).json({ message: 'Email service not configured' });
+  }
+
   try {
+    console.log('Creating email transporter...');
     // Create transporter
     const transporter = nodemailer.createTransporter({
       service: 'gmail',
@@ -45,12 +57,15 @@ router.post('/submit', async (req, res) => {
       `,
     };
 
+    console.log('Sending email to:', process.env.EMAIL_USER);
     // Send email
-    await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', result.messageId);
 
     res.json({ message: 'Message sent successfully' });
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('Email sending error:', error.message);
+    console.error('Full error:', error);
     res.status(500).json({ message: 'Failed to send message. Please try again.' });
   }
 });
