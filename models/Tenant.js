@@ -10,7 +10,9 @@ const tenantSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   status: { type: String, enum: ['active', 'inactive', 'blocked'], default: 'active' },
   wifiAccess: { type: Boolean, default: false },
-  expiryDate: { type: Date, required: true }
+  expiryDate: { type: Date, required: true },
+  resetToken: { type: String },
+  resetTokenExpiry: { type: Date }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Tenant', tenantSchema);
