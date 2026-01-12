@@ -94,7 +94,9 @@ const sendWiFiActivationEmail = async (tenant) => {
 // Send password reset email
 const sendPasswordResetEmail = async (tenant, resetToken) => {
   try {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+    // Use environment variable for frontend URL, fallback to localhost for development
+    const frontendUrl = process.env.FRONTEND_URL || 'https://kgwahla-wi-fi.vercel.app';
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
