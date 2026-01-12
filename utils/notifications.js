@@ -91,7 +91,46 @@ const sendWiFiActivationEmail = async (tenant) => {
 
 // SMS functionality removed
 
+// Send password reset email
+const sendPasswordResetEmail = async (tenant, resetToken) => {
+  try {
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: tenant.email,
+      subject: 'Password Reset - Kgwahla Wi-Fi',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">Reset Your Password</h2>
+          <p>Dear ${tenant.name},</p>
+          <p>You have requested to reset your password for your Kgwahla Wi-Fi account.</p>
+          <p>Please click the button below to reset your password:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Reset Password
+            </a>
+          </div>
+          <p>This link will expire in 1 hour for security reasons.</p>
+          <p>If you didn't request this password reset, please ignore this email.</p>
+          <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; color: #666;">${resetUrl}</p>
+          <p>Best regards,<br>Kgwahla Wi-Fi Management Team</p>
+        </div>
+      `
+    };
+
+    await emailTransporter.sendMail(mailOptions);
+    console.log('Password reset email sent to', tenant.email);
+    return true;
+  } catch (error) {
+    console.error('Password reset email error:', error);
+    return false;
+  }
+};
+
 module.exports = {
   sendWelcomeEmail,
-  sendWiFiActivationEmail
+  sendWiFiActivationEmail,
+  sendPasswordResetEmail
 };

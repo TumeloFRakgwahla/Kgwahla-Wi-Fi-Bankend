@@ -5,10 +5,11 @@
 const express = require('express'); // Web framework
 const bcrypt = require('bcryptjs'); // For password hashing (security)
 const jwt = require('jsonwebtoken'); // For creating authentication tokens
+const crypto = require('crypto'); // For generating reset tokens
 const Tenant = require('../models/Tenant'); // User data model
 const Admin = require('../models/Admin'); // Admin data model
 const { auth } = require('../middleware/auth'); // Authentication middleware
-const { sendWelcomeEmail } = require('../utils/notifications'); // Notification utilities
+const { sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/notifications'); // Notification utilities
 
 const router = express.Router(); // Create a router for these routes
 
@@ -158,6 +159,78 @@ router.get('/me', auth, async (req, res) => {
 
     // Send user data back
     res.json(tenant);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// FORGOT PASSWORD
+// POST /api/auth/forgot-password
+// Generates a reset token and sends reset email
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Find user by email
+    const tenant = await Tenant.findOne({ email });
+    if (!tenant) {
+      return res.status(404).json({ message: 'No account found with this email address' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Set token expiry (1 hour from now)
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // Save token to database
+    tenant.resetToken = resetToken;
+    tenant.resetTokenExpiry = resetTokenExpiry;
+    await tenant.save();
+
+    // Send reset email
+    try {
+      await sendPasswordResetEmail(tenant, resetToken);
+      res.json({ message: 'Password reset email sent successfully' });
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      // Don't expose email failure to user for security
+      res.json({ message: 'Password reset email sent successfully' });
+    }
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// RESET PASSWORD
+// POST /api/auth/reset-password
+// Resets password using the reset token
+router.post('/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    // Find user by reset token and check if token is still valid
+    const tenant = await Tenant.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() } // Token not expired
+    });
+
+    if (!tenant) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear reset token
+    tenant.passwordHash = passwordHash;
+    tenant.resetToken = undefined;
+    tenant.resetTokenExpiry = undefined;
+    await tenant.save();
+
+    res.json({ message: 'Password reset successfully' });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
