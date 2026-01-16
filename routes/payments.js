@@ -77,9 +77,13 @@ router.post('/approve/:id', auth, adminAuth, async (req, res) => {
     payment.status = 'approved';
     payment.approvedAt = new Date();
     await payment.save();
-    // Enable wifi access
+    // Enable wifi access and extend expiry date
     const tenant = await Tenant.findById(payment.tenantId);
     tenant.wifiAccess = true;
+    tenant.status = 'active';
+    // Extend expiry date by 30 days from approval date
+    const approvalDate = new Date();
+    tenant.expiryDate = new Date(approvalDate.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
     await tenant.save();
 
     // Send WiFi activation email notification
