@@ -64,7 +64,7 @@ const sendWiFiActivationEmail = async (tenant) => {
       subject: 'WiFi Access Activated - Kgwahla Wi-Fi',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #16a34a;">WiFi Access Activated! 🎉</h2>
+          <h2 style="color: #16a34a;">WiFi Access Activated! </h2>
           <p>Dear ${tenant.name},</p>
           <p>Great news! Your payment has been approved and your WiFi access is now active.</p>
           <p><strong>Connection Details:</strong></p>
@@ -131,8 +131,49 @@ const sendPasswordResetEmail = async (tenant, resetToken) => {
   }
 };
 
+// Send expiry reminder email
+const sendExpiryReminderEmail = async (tenant) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: tenant.email,
+      subject: 'WiFi Access Expiring Soon - Kgwahla Wi-Fi',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #dc2626;">WiFi Access Expiring Soon!</h2>
+          <p>Dear ${tenant.name},</p>
+          <p>Your WiFi access is expiring soon. Please renew your payment to continue enjoying uninterrupted internet service.</p>
+          <p><strong>Account Details:</strong></p>
+          <ul>
+            <li>Name: ${tenant.name}</li>
+            <li>Room: ${tenant.roomNumber}</li>
+            <li>Expiry Date: ${new Date(tenant.expiryDate).toLocaleDateString()}</li>
+          </ul>
+          <p><strong>To renew your access:</strong></p>
+          <ol>
+            <li>Log in to your account</li>
+            <li>Submit a new payment proof or register cash payment</li>
+            <li>Wait for admin approval</li>
+          </ol>
+          <p>If your access has already expired, your WiFi connection may be disabled until payment is renewed.</p>
+          <p>Please contact the admin office if you have any questions.</p>
+          <p>Best regards,<br>Kgwahla Wi-Fi Management Team</p>
+        </div>
+      `
+    };
+
+    await emailTransporter.sendMail(mailOptions);
+    console.log('Expiry reminder email sent to', tenant.email);
+    return true;
+  } catch (error) {
+    console.error('Expiry reminder email error:', error);
+    return false;
+  }
+};
+
 module.exports = {
   sendWelcomeEmail,
   sendWiFiActivationEmail,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendExpiryReminderEmail
 };
