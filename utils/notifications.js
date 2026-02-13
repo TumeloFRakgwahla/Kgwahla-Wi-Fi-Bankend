@@ -171,9 +171,54 @@ const sendExpiryReminderEmail = async (tenant) => {
   }
 };
 
+// Send admin notification when a payment is uploaded
+const sendAdminPaymentNotificationEmail = async (tenant, paymentType) => {
+  try {
+    // Get admin email from environment or use default
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+    
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: adminEmail,
+      subject: `[ACTION REQUIRED] New ${paymentType} Payment Submitted - ${tenant.name}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #2563eb;">New Payment Submitted</h2>
+          <p>A tenant has submitted a new payment for review.</p>
+          <p><strong>Tenant Details:</strong></p>
+          <ul>
+            <li>Name: ${tenant.name}</li>
+            <li>Room: ${tenant.roomNumber}</li>
+            <li>Phone: ${tenant.phone}</li>
+            <li>Email: ${tenant.email}</li>
+          </ul>
+          <p><strong>Payment Type:</strong> ${paymentType}</p>
+          <p><strong>Submitted At:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Action Required:</strong></p>
+          <ol>
+            <li>Log in to the admin dashboard</li>
+            <li>Review the payment proof</li>
+            <li>Approve or reject the payment</li>
+          </ol>
+          <p>Please review and process this payment at your earliest convenience.</p>
+          <p>Best regards,<br>Kgwahla Wi-Fi Management System</p>
+        </div>
+      `
+    };
+
+    await emailTransporter.sendMail(mailOptions);
+    console.log('Admin payment notification email sent to', adminEmail);
+    return true;
+  } catch (error) {
+    console.error('Admin payment notification email error:', error);
+    return false;
+  }
+};
+
 module.exports = {
   sendWelcomeEmail,
   sendWiFiActivationEmail,
   sendPasswordResetEmail,
-  sendExpiryReminderEmail
+  sendExpiryReminderEmail,
+  sendAdminPaymentNotificationEmail
 };

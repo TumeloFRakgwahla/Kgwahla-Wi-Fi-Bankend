@@ -3,7 +3,7 @@ const multer = require('multer');
 const { auth, adminAuth } = require('../middleware/auth');
 const Payment = require('../models/Payment');
 const Tenant = require('../models/Tenant');
-const { sendWiFiActivationEmail } = require('../utils/notifications');
+const { sendWiFiActivationEmail, sendAdminPaymentNotificationEmail } = require('../utils/notifications');
 
 const router = express.Router();
 
@@ -31,6 +31,15 @@ router.post('/upload', auth, upload.single('proofOfPayment'), async (req, res) =
 
     const payment = new Payment(paymentData);
     await payment.save();
+    
+    // Send admin notification
+    try {
+      const tenant = await Tenant.findById(tenantId);
+      await sendAdminPaymentNotificationEmail(tenant, 'Proof of Payment');
+    } catch (notificationError) {
+      console.error('Admin payment notification failed:', notificationError);
+    }
+    
     res.json({ message: 'Payment uploaded', payment });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -43,6 +52,15 @@ router.post('/cash', auth, async (req, res) => {
   try {
     const payment = new Payment({ tenantId, type: 'cash' });
     await payment.save();
+    
+    // Send admin notification
+    try {
+      const tenant = await Tenant.findById(tenantId);
+      await sendAdminPaymentNotificationEmail(tenant, 'Cash Payment');
+    } catch (notificationError) {
+      console.error('Admin cash payment notification failed:', notificationError);
+    }
+    
     res.json({ message: 'Cash payment submitted', payment });
   } catch (error) {
     res.status(500).json({ message: error.message });
